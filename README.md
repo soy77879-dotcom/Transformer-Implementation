@@ -1,28 +1,40 @@
 # Transformer Implementation Practice
 
-Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모델을 병원 FAQ 데이터에 적용해본 NLP 실습 저장소입니다.
+사전학습된 한국어 Transformer 모델을 활용해 병원 FAQ 데이터를 검색 기반 질의응답 형태로 구현한 NLP 실습 저장소입니다.
 
-이 저장소에서는 `SentenceTransformer`를 활용해 사용자 질문과 FAQ 질문을 문장 임베딩으로 변환하고, cosine similarity 기반으로 가장 유사한 FAQ 답변을 검색합니다. 완성형 서비스보다는 Transformer 기반 문장 임베딩, Retrieval QA, 하이퍼파라미터 실험 과정을 이해하는 데 초점을 두었습니다.
+이 실습은 완성형 서비스 개발보다 **Transformer 문장 임베딩**, **cosine similarity 기반 의미 검색**, **Retrieval-based Question Answering**, **하이퍼파라미터 실험**을 직접 코드로 확인하는 데 초점을 두었습니다.
 
-## Overview
+## Learning Focus
 
-- 사전학습 한국어 Transformer 모델 기반 FAQ 검색 구현
-- 병원 FAQ 데이터를 활용한 Retrieval-based Question Answering 실습
-- 사용자 질문과 FAQ 질문 간 cosine similarity 계산
-- 유사도 기준에 따라 답변, 카테고리, similarity 출력
-- epoch, batch size, learning rate 조합별 성능 비교
+- Transformer 기반 문장 임베딩 구조 이해
+- 사전학습 SentenceTransformer 모델 활용
+- 사용자 질문과 FAQ 질문 간 의미 유사도 계산
+- Retrieval-based Question Answering 흐름 구현
+- epoch, batch size, learning rate 변경에 따른 성능 비교
 - 실험 결과를 HTML 시각자료로 정리
+
+## Tech Stack
+
+| Category | Stack |
+| --- | --- |
+| Language | Python |
+| Data Processing | pandas |
+| NLP Model | `jhgan/ko-sroberta-multitask` |
+| Library | `sentence-transformers` |
+| Similarity | Cosine Similarity |
+| Visualization | HTML, SVG |
 
 ## Model
 
 | Item | Description |
 | --- | --- |
 | Model | `jhgan/ko-sroberta-multitask` |
-| Library | `sentence-transformers` |
 | Architecture | RoBERTa-based Transformer |
-| Task | Retrieval-based Question Answering |
+| Task Type | Retrieval-based Question Answering |
+| Input | 사용자 질문, FAQ 질문 |
+| Output | 가장 유사한 FAQ 답변, 카테고리, similarity |
 
-이 실습은 Transformer를 처음부터 직접 학습시키는 방식이 아니라, 이미 한국어 문장 의미를 학습한 사전학습 모델을 활용한 뒤 FAQ 데이터에 맞게 미세조정하는 방식으로 진행했습니다.
+이 저장소에서는 Transformer를 처음부터 직접 학습시키지 않고, 한국어 문장 의미를 이미 학습한 사전학습 모델을 활용했습니다. 이후 FAQ 데이터에 맞게 미세조정하면서 하이퍼파라미터별 성능 변화를 비교했습니다.
 
 ## How It Works
 
@@ -36,7 +48,7 @@ Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모�
 
 ## Hyperparameter Experiment
 
-사전학습 모델을 baseline으로 두고, FAQ 데이터에 맞게 미세조정하면서 하이퍼파라미터별 성능 변화를 비교했습니다.
+사전학습 모델을 baseline으로 두고, FAQ 데이터에 맞게 미세조정하면서 다음 하이퍼파라미터 조합을 비교했습니다.
 
 | Hyperparameter | Values |
 | --- | --- |
@@ -44,7 +56,7 @@ Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모�
 | Batch Size | 8, 16 |
 | Learning Rate | 1e-5, 2e-5 |
 
-평가에는 다음 지표를 사용했습니다.
+평가 지표는 다음과 같습니다.
 
 | Metric | Description |
 | --- | --- |
@@ -64,7 +76,7 @@ Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모�
 
 ## Visualization
 
-하이퍼파라미터 실험 결과와 Transformer 구현 흐름은 아래 페이지에서 확인할 수 있습니다.
+Transformer 구현 흐름과 하이퍼파라미터 실험 결과는 아래 페이지에서 확인할 수 있습니다.
 
 👉 https://soy77879-dotcom.github.io/Transformer-Implementation/
 
@@ -82,7 +94,7 @@ Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모�
     └── hyperparameter_experiment_report_standalone.html
 ```
 
-## Files
+## File Description
 
 | File | Description |
 | --- | --- |
@@ -93,15 +105,15 @@ Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모�
 | `experiment_results.csv` | 실험 결과 CSV |
 | `hyperparameter_visuals/hyperparameter_experiment_report_standalone.html` | 실험 결과 시각화 HTML |
 
-## Usage
+## Quick Start
 
-기본 챗봇 실행:
+챗봇 실행:
 
 ```bash
 python3 chatbot.py
 ```
 
-미세조정된 모델을 사용할 경우:
+미세조정된 모델로 실행:
 
 ```bash
 python3 chatbot.py --model-path models/best_model
@@ -113,7 +125,7 @@ python3 chatbot.py --model-path models/best_model
 python3 experiment.py
 ```
 
-## Example
+## Example Output
 
 ```text
 질문: 주차장 있나요?
@@ -125,5 +137,6 @@ python3 experiment.py
 ## Notes
 
 - 이 저장소는 Transformer 이론 학습 후 구현한 실습 결과물입니다.
+- 생성형 답변을 만드는 모델이 아니라, FAQ 데이터에서 가장 적절한 답변을 검색하는 구조입니다.
 - 모델 파일(`models/`)은 용량이 커서 GitHub 업로드 대상에서 제외했습니다.
 - `models/best_model`을 사용하려면 로컬에서 `experiment.py`를 실행해 모델을 생성해야 합니다.
