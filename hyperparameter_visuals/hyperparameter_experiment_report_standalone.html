@@ -50,9 +50,15 @@
     .explain-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-top:16px; }
     .metric-card { background:#ffffff; border:1px solid var(--line); border-radius:12px; padding:14px; line-height:1.55; }
     .metric-card b { display:block; margin-bottom:6px; font-size:15px; color:#111827; }
+    .docx-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; margin:16px 0 18px; }
+    .docx-stat { background:#f8fafc; border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .docx-stat span { display:block; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:6px; }
+    .docx-stat b { font-size:22px; color:#111827; }
+    .analysis-list { margin:12px 0 0; padding-left:20px; color:#374151; line-height:1.65; }
+    .analysis-list li { margin:6px 0; }
     .final-summary { margin-top:16px; padding:16px 18px; border-radius:12px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-size:17px; font-weight:800; line-height:1.55; }
     code { background:#e5e7eb; padding:2px 6px; border-radius:5px; }
-    @media (max-width: 820px) { .summary-grid, .selected, .explain-grid { grid-template-columns:1fr; } .kv { grid-template-columns:1fr; } }
+    @media (max-width: 820px) { .summary-grid, .selected, .explain-grid, .docx-grid { grid-template-columns:1fr; } .kv { grid-template-columns:1fr; } }
   </style>
 </head>
 <body>
@@ -229,6 +235,37 @@
 <rect x="720" y="455" width="14" height="14" rx="3" fill="#7c3aed"/>
 <text x="742" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 16, lr 2e-5</text>
 </svg></div>
+  </section>
+
+  <section class="panel">
+    <h2>DOCX 정리 기반 Epoch별 성능 실험</h2>
+    <div class="explain">
+      <strong>추가 실험 기록:</strong> 첨부된 <code>하이퍼파라미터별.docx</code> 문서의 내용을 반영한 섹션입니다. 이 실험은 batch size를 16으로 고정하고 epoch 0, 1, 2, 3을 비교하여 학습 횟수 변화에 따른 FAQ 검색 성능을 확인했습니다.
+    </div>
+    <div class="docx-grid">
+      <div class="docx-stat"><span>전체 FAQ</span><b>102개</b></div>
+      <div class="docx-stat"><span>학습용 FAQ</span><b>81개</b></div>
+      <div class="docx-stat"><span>평가용 FAQ</span><b>21개</b></div>
+      <div class="docx-stat"><span>평가 질문</span><b>20개</b></div>
+    </div>
+    <table class="raw-table">
+      <thead>
+        <tr><th>Epoch</th><th>실험 해석</th><th>Top-1</th><th>Top-3</th><th>MRR</th><th>Loss</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>0</td><td>Fine-tuning을 수행하지 않은 baseline Transformer 모델입니다.</td><td>0.80</td><td>0.90</td><td>0.8499</td><td>-</td></tr>
+        <tr><td>1</td><td>FAQ 데이터를 1회 학습했으며, MRR이 소폭 향상되었습니다.</td><td>0.80</td><td>0.90</td><td>0.8510</td><td>0.1264</td></tr>
+        <tr><td>2</td><td>Loss가 0.0986에서 0.0608로 감소했고, Top-1이 0.85로 향상되었습니다.</td><td>0.85</td><td>0.95</td><td>0.8861</td><td>0.0986 → 0.0608</td></tr>
+        <tr class="best-row"><td>3</td><td>Top-1, Top-3, MRR이 가장 높아 epoch별 비교에서 최종 모델로 선정되었습니다.</td><td>0.90</td><td>0.95</td><td>0.9288</td><td>0.0802</td></tr>
+      </tbody>
+    </table>
+    <ul class="analysis-list">
+      <li>Epoch 0은 추가 학습 전 모델이지만 Top-1 0.80, Top-3 0.90으로 비교적 높은 baseline 성능을 보였습니다.</li>
+      <li>Epoch 1은 Top-1과 Top-3가 baseline과 동일했지만, MRR이 0.8499에서 0.8510으로 소폭 개선되었습니다.</li>
+      <li>Epoch 2는 Top-1이 0.85로 상승했고, Top-3와 MRR도 함께 개선되어 FAQ 데이터에 더 잘 적응하기 시작했습니다.</li>
+      <li>Epoch 3은 Top-1 0.90, Top-3 0.95, MRR 0.9288로 가장 높은 성능을 기록했습니다.</li>
+    </ul>
+    <div class="final-summary">DOCX 실험 결론: batch_size=16 조건에서 epoch별 성능을 비교한 결과, epoch=3 모델이 Top-1 0.90, Top-3 0.95, MRR 0.9288로 가장 우수했다.</div>
   </section>
 
   <section class="panel">
