@@ -1,0 +1,22 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+
+# Local environment files
+.venv/
+venv/
+env/
+.env
+
+# macOS metadata
+.DS_Store
+
+# Large fine-tuned model artifacts
+models/
+
+# Download/package files generated locally
+*.zip
+
+# Temporary outputs
+checkpoints/
+logs/

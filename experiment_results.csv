@@ -1,0 +1,17 @@
+epoch,batch_size,learning_rate,top1_accuracy,top3_accuracy,mean_reciprocal_rank,eval_query_count,model_path
+0,8,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_0_batch_8_lr_1em05
+1,8,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_1_batch_8_lr_1em05
+2,8,1e-05,1.0,1.0,1.0,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_2_batch_8_lr_1em05
+3,8,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_3_batch_8_lr_1em05
+0,8,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_0_batch_8_lr_2em05
+1,8,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_1_batch_8_lr_2em05
+2,8,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_2_batch_8_lr_2em05
+3,8,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_3_batch_8_lr_2em05
+0,16,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_0_batch_16_lr_1em05
+1,16,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_1_batch_16_lr_1em05
+2,16,1e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_2_batch_16_lr_1em05
+3,16,1e-05,1.0,1.0,1.0,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_3_batch_16_lr_1em05
+0,16,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_0_batch_16_lr_2em05
+1,16,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_1_batch_16_lr_2em05
+2,16,2e-05,1.0,1.0,1.0,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_2_batch_16_lr_2em05
+3,16,2e-05,0.95,1.0,0.975,20,/Users/sonsoi/Desktop/hospital_faq_chatbot/models/epoch_3_batch_16_lr_2em05

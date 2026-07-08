@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Transformer 구현</title>
+  <style>
+    :root {
+      --bg:#f4f7fb; --panel:#ffffff; --ink:#111827; --muted:#6b7280; --line:#d9e2ef;
+      --blue:#2563eb; --blue-soft:#eff6ff; --green:#0f766e; --green-soft:#ecfdf5;
+    }
+    * { box-sizing:border-box; }
+    body { margin:0; background:var(--bg); color:var(--ink); font-family:Inter, Arial, 'Apple SD Gothic Neo', sans-serif; }
+    .page { max-width:1180px; margin:0 auto; padding:36px 28px 56px; }
+    .hero { background:linear-gradient(135deg, #ffffff 0%, #eef5ff 100%); border:1px solid var(--line); border-radius:16px; padding:30px; margin-bottom:22px; }
+    .eyebrow { color:var(--blue); font-weight:800; font-size:13px; margin-bottom:8px; }
+    h1 { margin:0; font-size:34px; letter-spacing:0; }
+    .subtitle { margin:10px 0 0; color:var(--muted); line-height:1.55; }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:24px; margin-bottom:20px; box-shadow:0 8px 24px rgba(15,23,42,0.04); }
+    h2 { margin:0 0 16px; font-size:22px; }
+    h3 { margin:0 0 12px; }
+    .summary-grid { display:grid; grid-template-columns:repeat(4, minmax(0, 1fr)); gap:12px; }
+    .mini-card { background:#f8fafc; border:1px solid var(--line); border-radius:12px; padding:16px; }
+    .mini-label { color:var(--muted); font-size:13px; font-weight:700; margin-bottom:8px; }
+    .mini-value { font-size:23px; font-weight:850; }
+    .selected { display:grid; grid-template-columns:1.15fr 1fr; gap:18px; align-items:stretch; }
+    .selected-main { border:2px solid var(--blue); background:var(--blue-soft); border-radius:14px; padding:22px; }
+    .selected-main h2 { color:#1d4ed8; margin-bottom:18px; }
+    .kv { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:10px; }
+    .kv div { background:white; border:1px solid #bfdbfe; border-radius:10px; padding:12px; }
+    .kv span { display:block; color:var(--muted); font-size:12px; font-weight:800; margin-bottom:5px; }
+    .kv b { font-size:20px; }
+    .tie-box { background:#f8fafc; border:1px solid var(--line); border-radius:14px; padding:18px; }
+    .tie-box ul { margin:0; padding-left:20px; }
+    .tie-box li { margin:10px 0; line-height:1.45; }
+    .tie-box span { color:var(--muted); font-size:13px; }
+    .chart-wrap { overflow-x:auto; }
+    .chart { min-width:880px; width:100%; height:auto; display:block; }
+    .heat-table, .raw-table { width:100%; border-collapse:separate; border-spacing:0; overflow:hidden; border:1px solid var(--line); border-radius:12px; }
+    .heat-table th, .heat-table td, .raw-table th, .raw-table td { padding:12px 14px; border-bottom:1px solid var(--line); text-align:center; }
+    .heat-table th:first-child, .raw-table th:first-child { text-align:left; }
+    .heat-table thead th, .raw-table thead th { background:#f1f5f9; font-weight:850; }
+    .heat-table tbody th { background:#fafafa; color:#374151; }
+    .score-cell { background:#dff3e8; font-weight:850; }
+    .best-score { background:#0f766e; color:white; }
+    .best-row td { background:#ecfdf5; color:#065f46; font-weight:850; }
+    .note { color:var(--muted); line-height:1.6; font-size:14px; }
+    .explain { margin:14px 0 18px; padding:14px 16px; border-radius:12px; background:#f8fafc; border:1px solid var(--line); color:#374151; line-height:1.65; font-size:14px; }
+    .explain strong { color:#111827; }
+    .explain-grid { display:grid; grid-template-columns:repeat(3, minmax(0, 1fr)); gap:12px; margin-top:16px; }
+    .metric-card { background:#ffffff; border:1px solid var(--line); border-radius:12px; padding:14px; line-height:1.55; }
+    .metric-card b { display:block; margin-bottom:6px; font-size:15px; color:#111827; }
+    .final-summary { margin-top:16px; padding:16px 18px; border-radius:12px; background:#fff7ed; border:1px solid #fed7aa; color:#9a3412; font-size:17px; font-weight:800; line-height:1.55; }
+    code { background:#e5e7eb; padding:2px 6px; border-radius:5px; }
+    @media (max-width: 820px) { .summary-grid, .selected, .explain-grid { grid-template-columns:1fr; } .kv { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+<div class="page">
+  <header class="hero">
+    <div class="eyebrow">Transformer 기반 FAQ Question Answering</div>
+    <h1>Transformer 구현</h1>
+    <p class="subtitle">사전학습 SentenceTransformer를 병원 FAQ 데이터에 맞게 미세조정하고, epoch · batch size · learning rate 조합별 성능 변화를 비교했습니다.</p>
+  </header>
+
+  <section class="panel">
+    <h2>구현 요약</h2>
+    <div class="summary-grid">
+      <div class="mini-card"><div class="mini-label">NLP Task</div><div class="mini-value">Retrieval QA</div></div>
+      <div class="mini-card"><div class="mini-label">Transformer</div><div class="mini-value">RoBERTa 기반</div></div>
+      <div class="mini-card"><div class="mini-label">검색 방식</div><div class="mini-value">Cosine</div></div>
+      <div class="mini-card"><div class="mini-label">평가 질문</div><div class="mini-value">20개</div></div>
+    </div>
+    <p class="note">사용자 질문과 FAQ 질문을 Transformer 기반 문장 임베딩으로 변환한 뒤, 가장 가까운 FAQ 답변을 검색합니다. 실험에서는 사전학습 모델을 baseline으로 두고 하이퍼파라미터를 바꿔 성능을 비교했습니다.</p>
+    <div class="explain">
+      <strong>구현 흐름:</strong> hospital_faq.csv의 FAQ 질문을 문장 임베딩으로 변환하고, 사용자가 입력한 질문도 같은 Transformer 모델로 임베딩합니다. 이후 cosine similarity로 가장 비슷한 FAQ 질문을 찾고, 해당 FAQ의 답변과 카테고리를 출력하는 Retrieval Question Answering 구조입니다.
+    </div>
+    <div class="explain-grid">
+      <div class="metric-card"><b>Top-1 Accuracy</b>모델이 가장 높은 유사도로 선택한 1개 답변이 정답인 비율입니다. 챗봇이 바로 보여주는 답변의 정확도를 의미합니다.</div>
+      <div class="metric-card"><b>Top-3 Accuracy</b>유사도 상위 3개 후보 안에 정답이 포함된 비율입니다. 후보 추천까지 고려했을 때의 검색 성능을 보여줍니다.</div>
+      <div class="metric-card"><b>MRR</b>정답이 몇 번째 순위에 등장했는지를 반영한 지표입니다. 정답이 1순위에 가까울수록 1.00에 가까워집니다.</div>
+    </div>
+  </section>
+
+  <section class="panel selected">
+    <div class="selected-main">
+      <h2>Selected Best Model</h2>
+      <div class="kv">
+        <div><span>Epoch</span><b>2</b></div>
+        <div><span>Batch Size</span><b>8</b></div>
+        <div><span>Learning Rate</span><b>1e-5</b></div>
+        <div><span>Top-1</span><b>1.00</b></div>
+        <div><span>Top-3</span><b>1.00</b></div>
+        <div><span>MRR</span><b>1.00</b></div>
+      </div>
+    </div>
+    <div class="tie-box">
+      <h3>동률 최고 조합</h3>
+      <ul><li>epoch 2, batch 8, lr 1e-5 <span>Top-1 1.00 / MRR 1.00</span></li><li>epoch 3, batch 16, lr 1e-5 <span>Top-1 1.00 / MRR 1.00</span></li><li>epoch 2, batch 16, lr 2e-5 <span>Top-1 1.00 / MRR 1.00</span></li></ul>
+      <p class="note">최고 성능은 3개 조합에서 동률입니다. Selected Best Model은 그중 첫 번째로 확인된 조합입니다.</p>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Epoch 변화에 따른 Top-1 Accuracy</h2>
+    <div class="explain">
+      <strong>그래프 해석:</strong> epoch는 모델이 FAQ 학습 데이터를 반복해서 학습한 횟수입니다. epoch=0은 미세조정 전 baseline이고, epoch가 증가할수록 FAQ 데이터에 더 맞춰집니다. 다만 epoch가 너무 커진다고 항상 좋아지는 것은 아니므로, 가장 높은 성능을 보이면서 안정적인 구간을 선택해야 합니다.
+    </div>
+    <div class="chart-wrap"><svg class="chart" viewBox="0 0 980 500" role="img" aria-label="Epoch별 Top-1 Accuracy">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="34" y="38" font-size="24" font-weight="800" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#111827">Epoch별 Top-1 Accuracy</text>
+<text x="34" y="62" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">하이퍼파라미터 조합별로 epoch가 증가할 때 정답 FAQ를 1순위로 찾은 비율</text>
+<line x1="86" y1="406.0" x2="906" y2="406.0" stroke="#e5e7eb"/>
+<text x="74" y="410.0" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.940</text>
+<line x1="86" y1="354.3" x2="906" y2="354.3" stroke="#e5e7eb"/>
+<text x="74" y="358.3" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.950</text>
+<line x1="86" y1="225.2" x2="906" y2="225.2" stroke="#e5e7eb"/>
+<text x="74" y="229.2" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.975</text>
+<line x1="86" y1="96.0" x2="906" y2="96.0" stroke="#e5e7eb"/>
+<text x="74" y="100.0" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">1.000</text>
+<line x1="86" y1="406" x2="906" y2="406" stroke="#9ca3af"/>
+<line x1="86" y1="96" x2="86" y2="406" stroke="#9ca3af"/>
+<text x="86.0" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">0</text>
+<text x="359.3" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">1</text>
+<text x="632.7" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">2</text>
+<text x="906.0" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">3</text>
+<text x="496.0" y="472" text-anchor="middle" font-size="13" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">Epoch</text>
+<path d="M 86.0 354.3 L 359.3 354.3 L 632.7 96.0 L 906.0 354.3" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="354.3" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<circle cx="359.3" cy="354.3" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="96.0" r="6" fill="#2563eb" stroke="#111827" stroke-width="3"/>
+<text x="632.7" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<circle cx="906.0" cy="354.3" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<path d="M 86.0 354.3 L 359.3 354.3 L 632.7 354.3 L 906.0 354.3" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="354.3" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<circle cx="359.3" cy="354.3" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="354.3" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<circle cx="906.0" cy="354.3" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<path d="M 86.0 354.3 L 359.3 354.3 L 632.7 354.3 L 906.0 96.0" fill="none" stroke="#d97706" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="354.3" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<circle cx="359.3" cy="354.3" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="354.3" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<circle cx="906.0" cy="96.0" r="6" fill="#d97706" stroke="#111827" stroke-width="3"/>
+<text x="906.0" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<path d="M 86.0 354.3 L 359.3 354.3 L 632.7 96.0 L 906.0 354.3" fill="none" stroke="#7c3aed" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="354.3" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<circle cx="359.3" cy="354.3" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="96.0" r="6" fill="#7c3aed" stroke="#111827" stroke-width="3"/>
+<text x="632.7" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<circle cx="906.0" cy="354.3" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="342.3" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.950</text>
+<rect x="90" y="455" width="14" height="14" rx="3" fill="#2563eb"/>
+<text x="112" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 8, lr 1e-5</text>
+<rect x="300" y="455" width="14" height="14" rx="3" fill="#059669"/>
+<text x="322" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 8, lr 2e-5</text>
+<rect x="510" y="455" width="14" height="14" rx="3" fill="#d97706"/>
+<text x="532" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 16, lr 1e-5</text>
+<rect x="720" y="455" width="14" height="14" rx="3" fill="#7c3aed"/>
+<text x="742" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 16, lr 2e-5</text>
+</svg></div>
+  </section>
+
+  <section class="panel">
+    <h2>Epoch 변화에 따른 MRR</h2>
+    <div class="explain">
+      <strong>MRR 해석:</strong> Top-1 Accuracy가 정답 여부만 보는 지표라면, MRR은 정답이 검색 결과에서 얼마나 앞 순위에 있는지도 함께 봅니다. MRR이 1.00이면 평가 질문에서 정답 FAQ가 모두 1순위로 검색되었다는 뜻입니다.
+    </div>
+    <div class="chart-wrap"><svg class="chart" viewBox="0 0 980 500" role="img" aria-label="Epoch별 MRR">
+<rect width="100%" height="100%" fill="#ffffff"/>
+<text x="34" y="38" font-size="24" font-weight="800" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#111827">Epoch별 MRR</text>
+<text x="34" y="62" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">정답 FAQ가 검색 순위 상단에 얼마나 안정적으로 위치하는지 비교</text>
+<line x1="86" y1="406.0" x2="906" y2="406.0" stroke="#e5e7eb"/>
+<text x="74" y="410.0" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.940</text>
+<line x1="86" y1="354.3" x2="906" y2="354.3" stroke="#e5e7eb"/>
+<text x="74" y="358.3" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.950</text>
+<line x1="86" y1="225.2" x2="906" y2="225.2" stroke="#e5e7eb"/>
+<text x="74" y="229.2" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">0.975</text>
+<line x1="86" y1="96.0" x2="906" y2="96.0" stroke="#e5e7eb"/>
+<text x="74" y="100.0" text-anchor="end" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#6b7280">1.000</text>
+<line x1="86" y1="406" x2="906" y2="406" stroke="#9ca3af"/>
+<line x1="86" y1="96" x2="86" y2="406" stroke="#9ca3af"/>
+<text x="86.0" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">0</text>
+<text x="359.3" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">1</text>
+<text x="632.7" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">2</text>
+<text x="906.0" y="434" text-anchor="middle" font-size="13" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">3</text>
+<text x="496.0" y="472" text-anchor="middle" font-size="13" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#4b5563">Epoch</text>
+<path d="M 86.0 225.2 L 359.3 225.2 L 632.7 96.0 L 906.0 225.2" fill="none" stroke="#2563eb" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="225.2" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<circle cx="359.3" cy="225.2" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="96.0" r="6" fill="#2563eb" stroke="#111827" stroke-width="3"/>
+<text x="632.7" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<circle cx="906.0" cy="225.2" r="6" fill="#2563eb" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<path d="M 86.0 225.2 L 359.3 225.2 L 632.7 225.2 L 906.0 225.2" fill="none" stroke="#059669" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="225.2" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<circle cx="359.3" cy="225.2" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="225.2" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<circle cx="906.0" cy="225.2" r="6" fill="#059669" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<path d="M 86.0 225.2 L 359.3 225.2 L 632.7 225.2 L 906.0 96.0" fill="none" stroke="#d97706" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="225.2" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<circle cx="359.3" cy="225.2" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="225.2" r="6" fill="#d97706" stroke="#ffffff" stroke-width="2"/>
+<circle cx="906.0" cy="96.0" r="6" fill="#d97706" stroke="#111827" stroke-width="3"/>
+<text x="906.0" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<path d="M 86.0 225.2 L 359.3 225.2 L 632.7 96.0 L 906.0 225.2" fill="none" stroke="#7c3aed" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+<circle cx="86.0" cy="225.2" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="86.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<circle cx="359.3" cy="225.2" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<circle cx="632.7" cy="96.0" r="6" fill="#7c3aed" stroke="#111827" stroke-width="3"/>
+<text x="632.7" y="84.0" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">1.000</text>
+<circle cx="906.0" cy="225.2" r="6" fill="#7c3aed" stroke="#ffffff" stroke-width="2"/>
+<text x="906.0" y="213.2" text-anchor="middle" font-size="11" font-weight="700" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">0.975</text>
+<rect x="90" y="455" width="14" height="14" rx="3" fill="#2563eb"/>
+<text x="112" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 8, lr 1e-5</text>
+<rect x="300" y="455" width="14" height="14" rx="3" fill="#059669"/>
+<text x="322" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 8, lr 2e-5</text>
+<rect x="510" y="455" width="14" height="14" rx="3" fill="#d97706"/>
+<text x="532" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 16, lr 1e-5</text>
+<rect x="720" y="455" width="14" height="14" rx="3" fill="#7c3aed"/>
+<text x="742" y="467" font-size="12" font-family="Inter, Arial, 'Apple SD Gothic Neo', sans-serif" fill="#374151">batch 16, lr 2e-5</text>
+</svg></div>
+  </section>
+
+  <section class="panel">
+    <h2>조합별 Top-1 Accuracy 한눈에 보기</h2>
+    <div class="explain">
+      <strong>비교 기준:</strong> 같은 epoch라도 batch size와 learning rate에 따라 성능이 달라질 수 있습니다. 표에서 진한 초록색은 Top-1 Accuracy가 1.00으로 가장 높게 나온 조합이며, 이 실험에서는 epoch=2, batch_size=8, learning_rate=1e-5 조합을 대표 Best Model로 선택했습니다.
+    </div>
+    <table class="heat-table">
+      <thead><tr><th>Hyperparameter</th><th>epoch 0</th><th>epoch 1</th><th>epoch 2</th><th>epoch 3</th></tr></thead>
+      <tbody><tr><th>batch 8 / lr 1e-5</th><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell best-score">1.00</td><td class="score-cell">0.95</td></tr><tr><th>batch 8 / lr 2e-5</th><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell">0.95</td></tr><tr><th>batch 16 / lr 1e-5</th><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell best-score">1.00</td></tr><tr><th>batch 16 / lr 2e-5</th><td class="score-cell">0.95</td><td class="score-cell">0.95</td><td class="score-cell best-score">1.00</td><td class="score-cell">0.95</td></tr></tbody>
+    </table>
+  </section>
+
+  <section class="panel">
+    <h2>CSV 원본 결과</h2>
+    <div class="explain">
+      <strong>원본 결과 확인:</strong> 아래 표는 experiment_results.csv에 저장된 실제 실험 지표를 그대로 정리한 것입니다. 시각화 그래프와 표는 이 CSV 데이터를 기준으로 작성했습니다.
+    </div>
+    <table class="raw-table">
+      <thead><tr><th>epoch</th><th>batch_size</th><th>learning_rate</th><th>Top-1</th><th>Top-3</th><th>MRR</th></tr></thead>
+      <tbody><tr><td>0</td><td>8</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>1</td><td>8</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr class="best-row"><td>2</td><td>8</td><td>1e-5</td><td>1.000</td><td>1.000</td><td>1.000</td></tr><tr><td>3</td><td>8</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>0</td><td>8</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>1</td><td>8</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>2</td><td>8</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>3</td><td>8</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>0</td><td>16</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>1</td><td>16</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>2</td><td>16</td><td>1e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr class="best-row"><td>3</td><td>16</td><td>1e-5</td><td>1.000</td><td>1.000</td><td>1.000</td></tr><tr><td>0</td><td>16</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr><td>1</td><td>16</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr><tr class="best-row"><td>2</td><td>16</td><td>2e-5</td><td>1.000</td><td>1.000</td><td>1.000</td></tr><tr><td>3</td><td>16</td><td>2e-5</td><td>0.950</td><td>1.000</td><td>0.975</td></tr></tbody>
+    </table>
+    <div class="final-summary">결과 요약: 사전학습 Transformer 모델을 FAQ 데이터에 맞게 미세조정한 결과, epoch=2, batch_size=8, learning_rate=1e-5 조합에서 Top-1, Top-3, MRR이 모두 1.00으로 향상되어 가장 안정적인 성능을 보였다.</div>
+  </section>
+</div>
+</body>
+</html>
