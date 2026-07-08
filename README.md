@@ -1,17 +1,17 @@
-# Hospital FAQ Chatbot
+# Transformer Implementation Practice
 
-Transformer 기반 문장 임베딩을 활용해 병원 FAQ 질문에 가장 적합한 답변을 찾아주는 챗봇 프로젝트입니다.
+Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모델을 실제 데이터에 적용해본 NLP 실습입니다.
 
-이 프로젝트는 단순 키워드 매칭이 아니라, 사용자의 질문과 FAQ 질문을 같은 임베딩 공간에 배치한 뒤 cosine similarity로 의미적으로 가까운 질문을 검색하는 방식으로 구현했습니다.
+실습 주제로는 병원 FAQ 챗봇을 선택했습니다. 단순 키워드 매칭이 아니라, 사용자의 질문과 FAQ 질문을 같은 임베딩 공간에 배치한 뒤 cosine similarity로 의미적으로 가까운 질문을 검색하는 방식으로 구현했습니다.
 
-## 프로젝트 목표
+## 실습 목표
 
-- 병원 FAQ 데이터를 활용한 질의응답형 챗봇 구현
-- 사전학습된 한국어 SentenceTransformer 모델 적용
+- Transformer의 문장 임베딩 개념을 실제 코드로 구현
+- 사전학습된 한국어 SentenceTransformer 모델을 활용
 - 사용자 질문과 FAQ 질문 간 의미 유사도 계산
-- 유사도가 높은 FAQ 답변, 카테고리, similarity 출력
-- epoch, batch size, learning rate를 조정하며 성능 비교
-- 하이퍼파라미터 실험 결과를 시각자료로 정리
+- Retrieval-based Question Answering 구조 이해
+- epoch, batch size, learning rate를 조정하며 성능 변화 비교
+- 실험 결과를 시각자료로 정리
 
 ## 사용한 Transformer 모델
 
@@ -20,7 +20,9 @@ Transformer 기반 문장 임베딩을 활용해 병원 FAQ 질문에 가장 적
 - 기반 구조: RoBERTa 계열 Transformer
 - NLP Task: Retrieval-based Question Answering
 
-이 챗봇은 사용자의 질문에 대해 새로운 문장을 생성하는 생성형 QA가 아니라, FAQ 데이터 안에서 가장 적절한 답변을 검색하는 검색 기반 질의응답 구조입니다.
+이 실습에서는 Transformer 모델을 직접 처음부터 학습시키기보다, 이미 한국어 문장 의미를 학습한 사전학습 모델을 활용했습니다. 이후 병원 FAQ 데이터에 맞게 미세조정하고, 하이퍼파라미터에 따라 검색 성능이 어떻게 달라지는지 확인했습니다.
+
+이 챗봇은 사용자의 질문에 대해 새로운 답변을 생성하는 생성형 QA가 아니라, FAQ 데이터 안에서 가장 적절한 답변을 검색하는 검색 기반 질의응답 구조입니다.
 
 ## 구현 방식
 
@@ -34,7 +36,9 @@ Transformer 기반 문장 임베딩을 활용해 병원 FAQ 질문에 가장 적
 
 ## 하이퍼파라미터 실험
 
-사전학습 모델을 baseline으로 두고 FAQ 데이터에 맞게 미세조정하면서 다음 하이퍼파라미터를 비교했습니다.
+Transformer 실습의 핵심은 사전학습 모델을 그대로 사용하는 것에서 끝내지 않고, FAQ 데이터에 맞게 미세조정하면서 성능 변화를 관찰하는 것이었습니다.
+
+사전학습 모델을 baseline으로 두고 다음 하이퍼파라미터를 비교했습니다.
 
 | Hyperparameter | Values |
 | --- | --- |
@@ -62,7 +66,7 @@ Transformer 기반 문장 임베딩을 활용해 병원 FAQ 질문에 가장 적
 
 ## Hyperparameter Visualization
 
-시각화 자료에서 Transformer 구현 흐름, 하이퍼파라미터 실험 결과, epoch별 성능 변화를 확인할 수 있습니다.
+시각화 자료에서 Transformer 실습 구현 흐름, 하이퍼파라미터 실험 결과, epoch별 성능 변화를 확인할 수 있습니다.
 
 👉 https://soy77879-dotcom.github.io/Transformer-Implementation/
 
@@ -109,4 +113,4 @@ python3 experiment.py
 
 ## 정리
 
-이 프로젝트는 병원 FAQ 챗봇을 Transformer 기반 Retrieval QA 방식으로 구현하고, 하이퍼파라미터 실험을 통해 어떤 설정에서 FAQ 검색 성능이 가장 좋은지 비교한 프로젝트입니다.
+이 저장소는 완성형 서비스 개발보다는 Transformer 이론을 실제 NLP 코드로 구현해보고, 사전학습 모델과 하이퍼파라미터 조정이 검색 기반 질의응답 성능에 어떤 영향을 주는지 확인한 실습 결과물입니다.
