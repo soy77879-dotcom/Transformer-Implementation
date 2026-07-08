@@ -1,44 +1,42 @@
 # Transformer Implementation Practice
 
-Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모델을 실제 데이터에 적용해본 NLP 실습입니다.
+Transformer 이론을 학습한 뒤, 사전학습된 한국어 Transformer 모델을 병원 FAQ 데이터에 적용해본 NLP 실습 저장소입니다.
 
-실습 주제로는 병원 FAQ 챗봇을 선택했습니다. 단순 키워드 매칭이 아니라, 사용자의 질문과 FAQ 질문을 같은 임베딩 공간에 배치한 뒤 cosine similarity로 의미적으로 가까운 질문을 검색하는 방식으로 구현했습니다.
+이 저장소에서는 `SentenceTransformer`를 활용해 사용자 질문과 FAQ 질문을 문장 임베딩으로 변환하고, cosine similarity 기반으로 가장 유사한 FAQ 답변을 검색합니다. 완성형 서비스보다는 Transformer 기반 문장 임베딩, Retrieval QA, 하이퍼파라미터 실험 과정을 이해하는 데 초점을 두었습니다.
 
-## 실습 목표
+## Overview
 
-- Transformer의 문장 임베딩 개념을 실제 코드로 구현
-- 사전학습된 한국어 SentenceTransformer 모델을 활용
-- 사용자 질문과 FAQ 질문 간 의미 유사도 계산
-- Retrieval-based Question Answering 구조 이해
-- epoch, batch size, learning rate를 조정하며 성능 변화 비교
-- 실험 결과를 시각자료로 정리
+- 사전학습 한국어 Transformer 모델 기반 FAQ 검색 구현
+- 병원 FAQ 데이터를 활용한 Retrieval-based Question Answering 실습
+- 사용자 질문과 FAQ 질문 간 cosine similarity 계산
+- 유사도 기준에 따라 답변, 카테고리, similarity 출력
+- epoch, batch size, learning rate 조합별 성능 비교
+- 실험 결과를 HTML 시각자료로 정리
 
-## 사용한 Transformer 모델
+## Model
 
-- 모델: `jhgan/ko-sroberta-multitask`
-- 라이브러리: `sentence-transformers`
-- 기반 구조: RoBERTa 계열 Transformer
-- NLP Task: Retrieval-based Question Answering
+| Item | Description |
+| --- | --- |
+| Model | `jhgan/ko-sroberta-multitask` |
+| Library | `sentence-transformers` |
+| Architecture | RoBERTa-based Transformer |
+| Task | Retrieval-based Question Answering |
 
-이 실습에서는 Transformer 모델을 직접 처음부터 학습시키기보다, 이미 한국어 문장 의미를 학습한 사전학습 모델을 활용했습니다. 이후 병원 FAQ 데이터에 맞게 미세조정하고, 하이퍼파라미터에 따라 검색 성능이 어떻게 달라지는지 확인했습니다.
+이 실습은 Transformer를 처음부터 직접 학습시키는 방식이 아니라, 이미 한국어 문장 의미를 학습한 사전학습 모델을 활용한 뒤 FAQ 데이터에 맞게 미세조정하는 방식으로 진행했습니다.
 
-이 챗봇은 사용자의 질문에 대해 새로운 답변을 생성하는 생성형 QA가 아니라, FAQ 데이터 안에서 가장 적절한 답변을 검색하는 검색 기반 질의응답 구조입니다.
+## How It Works
 
-## 구현 방식
-
-1. `hospital_faq.csv` 파일에서 FAQ 질문, 답변, 카테고리를 불러옵니다.
-2. FAQ의 모든 질문을 SentenceTransformer로 임베딩합니다.
-3. 사용자가 질문을 입력하면 해당 질문도 같은 모델로 임베딩합니다.
-4. 사용자 질문 임베딩과 FAQ 질문 임베딩 간 cosine similarity를 계산합니다.
+1. `hospital_faq.csv`에서 FAQ 질문, 답변, 카테고리를 불러옵니다.
+2. FAQ 질문을 SentenceTransformer로 문장 임베딩합니다.
+3. 사용자가 입력한 질문도 같은 모델로 임베딩합니다.
+4. 사용자 질문과 FAQ 질문 간 cosine similarity를 계산합니다.
 5. 가장 유사한 FAQ를 선택합니다.
-6. 유사도가 기준값보다 낮으면 답변을 찾지 못했다는 메시지를 출력합니다.
-7. 유사도가 기준값 이상이면 답변, 카테고리, 유사도를 출력합니다.
+6. similarity가 기준값보다 낮으면 답변을 찾지 못했다는 메시지를 출력합니다.
+7. similarity가 기준값 이상이면 답변, 카테고리, similarity를 출력합니다.
 
-## 하이퍼파라미터 실험
+## Hyperparameter Experiment
 
-Transformer 실습의 핵심은 사전학습 모델을 그대로 사용하는 것에서 끝내지 않고, FAQ 데이터에 맞게 미세조정하면서 성능 변화를 관찰하는 것이었습니다.
-
-사전학습 모델을 baseline으로 두고 다음 하이퍼파라미터를 비교했습니다.
+사전학습 모델을 baseline으로 두고, FAQ 데이터에 맞게 미세조정하면서 하이퍼파라미터별 성능 변화를 비교했습니다.
 
 | Hyperparameter | Values |
 | --- | --- |
@@ -46,43 +44,56 @@ Transformer 실습의 핵심은 사전학습 모델을 그대로 사용하는 �
 | Batch Size | 8, 16 |
 | Learning Rate | 1e-5, 2e-5 |
 
-평가 지표는 다음과 같습니다.
+평가에는 다음 지표를 사용했습니다.
 
-| Metric | Meaning |
+| Metric | Description |
 | --- | --- |
-| Top-1 Accuracy | 가장 높은 유사도로 선택한 1개 답변이 정답인 비율 |
+| Top-1 Accuracy | 가장 높은 유사도로 선택한 답변이 정답인 비율 |
 | Top-3 Accuracy | 상위 3개 후보 안에 정답이 포함된 비율 |
 | MRR | 정답이 검색 결과에서 얼마나 앞 순위에 있는지 반영한 지표 |
 
-## 실험 결과 요약
+## Results
 
-최고 성능은 여러 조합에서 동률로 나타났고, 대표 Best Model은 다음 조합으로 선택했습니다.
+대표 Best Model은 다음 조합으로 선택했습니다.
 
 | Epoch | Batch Size | Learning Rate | Top-1 | Top-3 | MRR |
 | --- | --- | --- | --- | --- | --- |
 | 2 | 8 | 1e-5 | 1.00 | 1.00 | 1.00 |
 
-결과적으로 사전학습 Transformer 모델을 FAQ 데이터에 맞게 미세조정했을 때, `epoch=2`, `batch_size=8`, `learning_rate=1e-5` 조합에서 가장 안정적인 성능을 확인했습니다.
+실험 결과, `epoch=2`, `batch_size=8`, `learning_rate=1e-5` 조합에서 Top-1, Top-3, MRR이 모두 `1.00`으로 가장 안정적인 성능을 보였습니다.
 
-## Hyperparameter Visualization
+## Visualization
 
-시각화 자료에서 Transformer 실습 구현 흐름, 하이퍼파라미터 실험 결과, epoch별 성능 변화를 확인할 수 있습니다.
+하이퍼파라미터 실험 결과와 Transformer 구현 흐름은 아래 페이지에서 확인할 수 있습니다.
 
 👉 https://soy77879-dotcom.github.io/Transformer-Implementation/
 
-## 주요 파일
+## Repository Structure
+
+```text
+.
+├── chatbot.py
+├── experiment.py
+├── hospital_faq.csv
+├── evaluation_questions.csv
+├── experiment_results.csv
+└── hyperparameter_visuals/
+    ├── experiment_results.csv
+    └── hyperparameter_experiment_report_standalone.html
+```
+
+## Files
 
 | File | Description |
 | --- | --- |
-| `chatbot.py` | 병원 FAQ 챗봇 실행 코드 |
+| `chatbot.py` | FAQ 챗봇 실행 코드 |
 | `experiment.py` | 하이퍼파라미터 실험 코드 |
 | `hospital_faq.csv` | FAQ 질문, 답변, 카테고리 데이터 |
-| `evaluation_questions.csv` | 실험 평가용 질문 데이터 |
-| `experiment_results.csv` | 하이퍼파라미터 실험 결과 CSV |
+| `evaluation_questions.csv` | 평가용 질문 데이터 |
+| `experiment_results.csv` | 실험 결과 CSV |
 | `hyperparameter_visuals/hyperparameter_experiment_report_standalone.html` | 실험 결과 시각화 HTML |
-| `hyperparameter_visuals/experiment_results.csv` | 시각자료에 사용한 실험 결과 CSV |
 
-## 실행 방법
+## Usage
 
 기본 챗봇 실행:
 
@@ -102,7 +113,7 @@ python3 chatbot.py --model-path models/best_model
 python3 experiment.py
 ```
 
-## 예시 출력
+## Example
 
 ```text
 질문: 주차장 있나요?
@@ -111,6 +122,8 @@ python3 experiment.py
 유사도: 0.564
 ```
 
-## 정리
+## Notes
 
-이 저장소는 완성형 서비스 개발보다는 Transformer 이론을 실제 NLP 코드로 구현해보고, 사전학습 모델과 하이퍼파라미터 조정이 검색 기반 질의응답 성능에 어떤 영향을 주는지 확인한 실습 결과물입니다.
+- 이 저장소는 Transformer 이론 학습 후 구현한 실습 결과물입니다.
+- 모델 파일(`models/`)은 용량이 커서 GitHub 업로드 대상에서 제외했습니다.
+- `models/best_model`을 사용하려면 로컬에서 `experiment.py`를 실행해 모델을 생성해야 합니다.
